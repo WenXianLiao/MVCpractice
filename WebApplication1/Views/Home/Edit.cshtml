@@ -1,0 +1,39 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "員工明細";
+}
+@model WebApplication1.Models.EditViewModel
+
+<h2>部門列表</h2>
+
+<div>
+<form method="post" action="@Url.Action("Edit")">
+    <div>
+        <label class="form-label">員工姓名</label>
+        <input type="text" id="Name" name="Name" class="form-control" value="@Model.Name">
+    </div>
+    <div>
+        <label class="form-label">性別</label>
+        <select id="Sex" name="Sex" class="form-select" value="@Model.Sex">
+            <option value="男">男</option>
+            <option value="女">女</option>
+        </select>
+    </div>
+     <div>
+        <label class="form-label">年紀</label>
+        <input type="text" id="Year" name="Year" class="form-control" value="@Model.Year">
+    </div>
+     <div>
+        <label class="form-label">部門</label>
+        <select id="DeptId" name="DeptId" class="form-select" value="@Model.DeptId">
+             @foreach (var item in @Model.DeptList)
+            {
+                <option value="@item.DeptId">@item.DeptName</option>
+            }
+        </select>
+    </div>
+    <input type="submit">
+</form>
+</div>
