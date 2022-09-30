@@ -1,0 +1,59 @@
+var validator = new AnnualCAEvaluationTaskDetailFormsValidator(_localizer);
+ ValidationResult result = new ValidationResult();
+ result = validator.Validate(validatorList, options => options.IncludeRuleSets("BatchAnnualCAEvaluationTaskDetailFormApply"));
+ 
+ 
+ 
+ 
+ using FluentValidation;
+     public class AnnualCAEvaluationTaskDetailFormsValidator : AbstractValidator<List<FormTask>>
+    {
+        public AnnualCAEvaluationTaskDetailFormsValidator(IHtmlLocalizer<SharedResource> localizer)
+        {
+            RuleSet("BatchAnnualCAEvaluationTaskDetailFormApply", () =>
+            {
+                RuleForEach(m => m).ChildRules(form =>
+                {
+                    form.RuleFor(m => m.FormAnnualCaevaluationTaskDetail.FirstOrDefault()).SetValidator(m => new AnnualCAEvaluationTaskDetailValidator(localizer, m));
+                });
+            });
+            RuleSet("BatchAnnualCAEvaluationTaskDetailFormApprove", () =>
+            {
+                RuleForEach(m => m).ChildRules(form =>
+                {
+                    form.RuleFor(m => m.Comment).NotEmpty().When(m => m.FormAnnualCaevaluationTaskDetail.Any(d => d.FormType > 0)).WithMessage(localizer["退件時意見欄位必填"].Value);
+                });
+            });
+        }
+    }
+    public class AnnualCAEvaluationTaskDetailValidator : AbstractValidator<FormCaevaluationTaskDetail>
+    {
+        public AnnualCAEvaluationTaskDetailValidator(IHtmlLocalizer<SharedResource> localizer, FormTask formTask)
+        {
+            //確認單編輯控制點
+            RuleSet("ControlActivityEdit", () =>
+            {
+                RuleFor(m => m.Remark).NotEmpty().When(m => m.Result == ConfirmControlActivityStatus.變更 && formTask.TaskStatus == FormTaskStatus.草稿 || (formTask.TaskStatus == FormTaskStatus.退件 && formTask.CurentSite.SiteType == SiteType.自評人員))
+                .WithMessage(localizer["修改控制點資料需填寫說明於備註欄位"].Value);
+                RuleFor(m => m.Remark).NotEmpty().When(m => m.Result == ConfirmControlActivityStatus.刪除 && formTask.TaskStatus == FormTaskStatus.草稿 || (formTask.TaskStatus == FormTaskStatus.退件 && formTask.CurentSite.SiteType == SiteType.自評人員))
+               .WithMessage(localizer["刪除控制點資料需填寫說明於備註欄位"].Value);
+                RuleFor(m => m.Remark).NotEmpty().When(m => m.Result == ConfirmControlActivityStatus.新增 && formTask.TaskStatus == FormTaskStatus.草稿 || (formTask.TaskStatus == FormTaskStatus.退件 && formTask.CurentSite.SiteType == SiteType.自評人員))
+                .WithMessage(localizer["新增控制點資料需填寫說明於備註欄位"].Value);
+                RuleFor(m => m.CurrentControlActivity).ChildRules(
+                    ca =>
+                    {
+                        ca.RuleFor(m => m.RiskScenarios).NotEmpty().WithMessage(localizer["風險項目或風險發生情境必填"].Value);
+                        //ca.RuleFor(m => m.ActivityCode).NotEmpty().WithMessage("控制點編號必填");
+                        //ca.RuleFor(m => m.ActivityProperties).Must(m => m != null && m.Any()).WithMessage("控制點屬性必填");
+                        ca.RuleFor(m => m.ActivityDesc).NotEmpty().WithMessage(localizer["控制點必填"].Value);
+                        ca.RuleFor(m => m.ProcedureId).Must(guid => guid != Guid.Empty).WithMessage(localizer["程序必填"].Value);
+                        ca.RuleFor(m => m.ObjectiveDesc).NotEmpty().WithMessage(localizer["目標必填"].Value);
+                        ca.RuleFor(m => m.ObjectiveTypes).Must(o => o != null && o.Any()).WithMessage(localizer["目標至少選擇一項"].Value);
+                        //ca.RuleFor(m => m.ActivityProperties).Must(o => o != null && o.Any()).WithMessage("控制點屬性至少選擇一項");
+                        ca.RuleFor(m => m.RiskLevelValue).GreaterThanOrEqualTo(r => r.RemainRiskLevelValue).WithMessage(localizer["剩餘風險必須小於等於風險評估值"].Value);
+                        //ca.RuleFor(m => m.RemainRiskLevelValue).LessThanOrEqualTo(r => r.RiskLevelValue).WithMessage("剩餘風險不得大於固有風險");
+                    }
+                );
+            });
+        }
+    }
